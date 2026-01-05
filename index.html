@@ -292,30 +292,50 @@
             }
         });
 
-        generateBtn.addEventListener('click', () => {
-            if (!originalImage) {
-                alert('请先选择一张图片！');
-                return;
-            }
-            drawCanvas();
-        });
+        function setupEventListeners() {
+            const inputs = [
+                subtitleHeightInput,
+                fontSizeInput,
+                fontColorInput,
+                strokeColorInput,
+                fontFamilySelect,
+                subtitleTextInput
+            ];
 
-        saveBtn.addEventListener('click', () => {
-            if (!originalImage) {
-                alert('没有可保存的图片！');
-                return;
-            }
-            const link = document.createElement('a');
-            link.download = originalFileName;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    if (originalImage) {
+                        drawCanvas();
+                    }
+                });
+            });
 
-        // Real-time updates
-        [subtitleHeightInput, fontSizeInput, fontColorInput, strokeColorInput, subtitleTextInput].forEach(input => {
-            input.addEventListener('input', drawCanvas);
-        });
-        fontFamilySelect.addEventListener('change', drawCanvas);
+            generateBtn.addEventListener('click', () => {
+                if (!originalImage) {
+                    alert('请先选择一张图片！');
+                    return;
+                }
+                drawCanvas();
+            });
+
+            saveBtn.addEventListener('click', () => {
+                if (!originalImage) {
+                    alert('没有可保存的图片！');
+                    return;
+                }
+                const link = document.createElement('a');
+                link.download = originalFileName;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        setupEventListeners();
+
+    </script>
+
+</body>
+</html>
     </script>
 
 </body>
