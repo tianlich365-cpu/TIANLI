@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片字幕生成器</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #e0e0e0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #111111;
+            padding: 30px 40px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            box-shadow: 0 0 35px rgba(0, 255, 155, 0.1);
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00ff9b;
+            padding-bottom: 15px;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label, .input-group label {
+            white-space: nowrap;
+            color: #aaaaaa;
+            font-size: 14px;
+        }
+        input[type="number"], input[type="color"], select, textarea {
+            background-color: #222;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 8px 12px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="number"], select {
+             width: 80px;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff9b;
+            box-shadow: 0 0 5px rgba(0, 255, 155, 0.5);
+        }
+        input[type="color"] {
+            padding: 2px;
+            height: 35px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        button, .file-upload-label {
+            padding: 12px 25px;
+            border: 1px solid transparent;
+            color: #000;
+            background-color: #00ff9b;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .file-upload-label {
+            display: inline-block;
+        }
+        #save-btn {
+            background-color: transparent;
+            color: #00ff9b;
+            border: 1px solid #00ff9b;
+        }
+        button:hover, .file-upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 155, 0.3);
+        }
+        #save-btn:hover {
+            background-color: rgba(0, 255, 155, 0.1);
+        }
+        #preview-container {
+            margin-top: 10px;
+            border: 2px dashed #333;
+            min-height: 200px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            transition: border-color 0.3s;
+        }
+        #preview-container:has(canvas) {
+            border-color: #00ff9b;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 60vh;
+            display: block;
+            border-radius: 5px;
+        }
+        #image-loader {
+            display: none;
+        }
+        #file-name {
+            font-size: 14px;
+            color: #888;
+            margin-left: 15px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>图片字幕生成器</h1>
+
+        <div class="controls">
+            <label for="image-loader" class="file-upload-label">选择文件</label>
+            <input type="file" id="image-loader" name="image-loader"/>
+            <span id="file-name">未选择文件</span>
+        </div>
+
+        <div class="controls">
+            <div class="input-group">
+                <label for="subtitle-height">字幕高度(px):</label>
+                <input type="number" id="subtitle-height" value="40">
+            </div>
+            <div class="input-group">
+                <label for="font-size">字体大小(px):</label>
+                <input type="number" id="font-size" value="20">
+            </div>
+            <div class="input-group">
+                <label for="font-color">字体颜色:</label>
+                <input type="color" id="font-color" value="#FFFFFF">
+            </div>
+            <div class="input-group">
+                <label for="stroke-color">轮廓颜色:</label>
+                <input type="color" id="stroke-color" value="#000000">
+            </div>
+            <div class="input-group">
+                <label for="font-family">字体:</label>
+                <select id="font-family">
+                    <option value="sans-serif">默认</option>
+                    <option value="SimSun, Songti SC">宋体</option>
+                    <option value="SimHei, Heiti SC">黑体</option>
+                    <option value="KaiTi, Kaiti SC">楷体</option>
+                    <option value="FangSong, FangSong_GB2312">仿宋</option>
+                    <option value="Microsoft YaHei">微软雅黑</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <textarea id="subtitle-text" placeholder="在此处输入字幕，每行一条..."></textarea>
+        </div>
+
+        <div class="buttons">
+            <button id="generate-btn">生成字幕图片</button>
+            <button id="save-btn">保存图片</button>
+        </div>
+
+        <div id="preview-container">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const imageLoader = document.getElementById('image-loader');
+        const fileNameSpan = document.getElementById('file-name');
+        const subtitleHeightInput = document.getElementById('subtitle-height');
+        const fontSizeInput = document.getElementById('font-size');
+        const fontColorInput = document.getElementById('font-color');
+        const strokeColorInput = document.getElementById('stroke-color');
+        const fontFamilySelect = document.getElementById('font-family');
+        const subtitleTextInput = document.getElementById('subtitle-text');
+        const generateBtn = document.getElementById('generate-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let originalImage = null;
+        let originalFileName = 'subtitled_image.png';
+
+        function drawCanvas() {
+            if (!originalImage) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            // Redraw the original image
+            ctx.drawImage(originalImage, 0, 0);
+
+            const lines = subtitleTextInput.value.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) {
+                return; // No text, no need to draw subtitles
+            }
+
+            const subtitleHeight = parseInt(subtitleHeightInput.value);
+            const fontSize = parseInt(fontSizeInput.value);
+            const fontColor = fontColorInput.value;
+            const strokeColor = strokeColorInput.value;
+            const fontFamily = fontFamilySelect.value;
+
+            ctx.font = `${fontSize}px ${fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const totalSubtitleHeight = lines.length * subtitleHeight;
+
+            lines.forEach((line, index) => {
+                const y = canvas.height - totalSubtitleHeight + (index * subtitleHeight);
+
+                // Draw background bar
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, y, canvas.width, subtitleHeight);
+
+                // Draw text
+                const textY = y + subtitleHeight / 2;
+
+                // Draw stroke
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 2;
+                ctx.strokeText(line, canvas.width / 2, textY);
+
+                // Draw fill text
+                ctx.fillStyle = fontColor;
+                ctx.fillText(line, canvas.width / 2, textY);
+            });
+        }
+
+        imageLoader.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    originalImage = new Image();
+                    originalImage.onload = () => {
+                        canvas.width = originalImage.width;
+                        canvas.height = originalImage.height;
+                        drawCanvas();
+                    }
+                    originalImage.src = event.target.result;
+                }
+                fileNameSpan.textContent = file.name;
+                originalFileName = file.name.replace(/\.[^/.]+$/, "") + '_subtitled.png';
+                reader.readAsDataURL(file);
+            } else {
+                originalImage = null;
+                fileNameSpan.textContent = '';
+                drawCanvas();
+            }
+        });
+
+        generateBtn.addEventListener('click', () => {
+            if (!originalImage) {
+                alert('请先选择一张图片！');
+                return;
+            }
+            drawCanvas();
+        });
+
+        saveBtn.addEventListener('click', () => {
+            if (!originalImage) {
+                alert('没有可保存的图片！');
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = originalFileName;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Real-time updates
+        [subtitleHeightInput, fontSizeInput, fontColorInput, strokeColorInput, subtitleTextInput].forEach(input => {
+            input.addEventListener('input', drawCanvas);
+        });
+        fontFamilySelect.addEventListener('change', drawCanvas);
+    </script>
+
+</body>
+</html>
